@@ -12,7 +12,7 @@ import diagram from './src/diagram';
 }*/
 
 
-function view (count, diagram) {
+function renderView (count) {
   return (
     div('.counter', [
       'Count:' + count,
@@ -20,7 +20,10 @@ function view (count, diagram) {
       button('.subtract', 'Subtract'),
       button('.reset', 'Reset'),
 
-      pre(diagram)
+      pre(main.toString()),
+      pre(intent.toString()),
+      pre(model.toString()),
+      pre(view.toString())
     ])
   );
 }
@@ -29,9 +32,7 @@ const add = (count) => count + 1
 const subtract = (count) => count - 1
 const reset = (count) => 0
 
-const main = diagram`
-            Given: ${{xs, view, add, subtract, reset}}
-
+const intent = diagram`
                     {sources.DOM}
                     |         | \
                     |         |  \
@@ -43,18 +44,49 @@ const main = diagram`
                    |              |                  {.events('click')}
       {.events('click')}       {.events('click')}     |
                    |              |                   |
-              {.mapTo(add)}    {.mapTo(subtract)}    {.mapTo(reset)}
-                   |             /                    /
                   add$        subtract$            reset$
-                    \           |                  /
-                  {  xs.merge(add$, subtract$, reset$) }
+`;
+
+const model = diagram`
+Given: ${{xs, add, subtract, reset}}
+
+   {sources.add$}   {sources.subtract$}   {sources.reset$}
+         |                 |                  |
+    {.mapTo(add)}    {.mapTo(subtract)}   {.mapTo(reset)}
+         |                 |                  |
+        add$           subtract$          reset$
+          \                |               /
+        { xs.merge(add$, subtract$, reset$) }
                            |
-       {.fold((state, reducer) => reducer(state), 0)}
+     {.fold((state, reducer) => reducer(state), 0)}
                            |
-            {.map(count => view(count, diagram))}
-                           |
-                           v
-                          DOM
+                         count$
+`;
+
+const view = diagram`
+Given: ${{renderView}}
+
+        {sources.count$}
+               |
+      {.map(renderView)}
+               |
+             vtree$
+`;
+
+const main = diagram`
+  Given: ${{intent, model, view}}
+
+          {sources}
+              |
+          {intent}
+              |
+           {model}
+              |
+           {view}
+              |
+          {.vtree$}
+              |
+             DOM
 `;
 
 const drivers = {

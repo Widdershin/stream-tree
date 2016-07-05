@@ -64,13 +64,6 @@ function breakUpLine (line) {
         };
       }
 
-      if (character === 'v') {
-        return {
-          ...state,
-          tokens: [...state.tokens, {type: 'v', range: range(index, index)}]
-        };
-      }
-
       if (state.parsingAssignment) {
         const tokens = state.tokens.slice();
         const assignmentToken = tokens[tokens.length - 1];
@@ -130,7 +123,7 @@ export default function diagram (strings, ...values) {
 
   const lines = diagramString.split("\n");
 
-  return function main (sources) {
+  function main (sources) {
     const initialState = {
       channels: [],
       returnValue: {}
@@ -166,7 +159,11 @@ export default function diagram (strings, ...values) {
 
           const context = {sources, ...values, input, ...given, diagram: diagramString};
 
-          const result = vm.runInNewContext(token.code, context);
+          let result = vm.runInNewContext(token.code, context);
+
+          if (typeof result === 'function' && overlappingChannels.length === 1) {
+            result = result(overlappingChannels[0].value);
+          }
 
           return {...token, value: result, readyToAssign: false};
         }
@@ -175,18 +172,9 @@ export default function diagram (strings, ...values) {
           return {...token, name: overlappingChannels[0].name, value: overlappingChannels[0].value, readyToAssign: false};
         }
 
-        if (token.type === 'v') {
-          return {...token, value: overlappingChannels[0].value, readyToAssign: true};
-        }
-
-        if (token.type === 'assignment' && overlappingChannels[0].readyToAssign) {
-          state.returnValue[token.name] = overlappingChannels[0].value;
-          return;
-        }
-
         if (token.type === 'assignment') {
-          return {...token, value: overlappingChannels[0].value, readyToAssign: false, name: token.name}
-        };
+          return {...token, value: overlappingChannels[0].value, readyToAssign: false, name: token.name};
+        }
       }).filter(channel => !!channel);
 
       state.channels = newChannels;
@@ -194,8 +182,18 @@ export default function diagram (strings, ...values) {
       return Object.assign({}, state);
     }, initialState);
 
+    result.channels.forEach(channel => {
+      if (channel.name) {
+        result.returnValue[channel.name] = channel.value;
+      }
+    });
+
     return result.returnValue;
   };
+
+  main.toString = () => diagramString;
+
+  return main;
 }
 
 // Given a diagram
