@@ -20,31 +20,28 @@ function renderView (count) {
       button('.subtract', 'Subtract'),
       button('.reset', 'Reset'),
 
-      pre(main.toString()),
-      pre(intent.toString()),
-      pre(model.toString()),
-      pre(view.toString())
+      pre('function main (sources) {' + main.toString() + '}'),
+      pre('function intent (sources) {' + intent.toString() + '}'),
+      pre('function model (sources) {' + model.toString() + '}'),
+      pre('function view (sources) {' + view.toString( + '}'))
     ])
   );
 }
 
-const add = (count) => count + 1
-const subtract = (count) => count - 1
-const reset = (count) => 0
+const add = (count) => count + 1;
+const subtract = (count) => count - 1;
+const reset = (count) => 0;
 
 const intent = diagram`
-                    {sources.DOM}
-                    |         | \
-                    |         |  \
-                    |         |   \
-                    |          \   \
-                    |           \  {.select('.reset')}
-                   /             \                    \
-       {.select('.add')}   {.select('.subtract')}     |
-                   |              |                  {.events('click')}
-      {.events('click')}       {.events('click')}     |
-                   |              |                   |
-                  add$        subtract$            reset$
+                     {      sources.DOM          }
+                     /           |               \
+                    /            |                \
+                   /             |                 \
+     {.select('.add')}  {.select('.subtract')}  {.select('.reset')}
+                |                |                   |
+    {.events('click')}    {.events('click')}     {.events('click')}
+                |                |                   |
+               add$          subtract$            reset$
 `;
 
 const model = diagram`
