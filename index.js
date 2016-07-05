@@ -1,5 +1,5 @@
 import {run} from '@cycle/xstream-run';
-import {div, makeDOMDriver} from '@cycle/dom';
+import {button, div, makeDOMDriver} from '@cycle/dom';
 import xs from 'xstream';
 import vm from 'vm';
 
@@ -13,21 +13,26 @@ function diagram (strings, ...values) {
   const lines = strings[0].split('\n');
 
   return function main (sources) {
-    const world = Object.assign({}, sources, {xs, div, value: null, aboutToAssign: false, returnValue: {}});
+    const world = Object.assign({}, sources, {value: null, aboutToAssign: false, returnValue: {}});
 
     const result = lines.reduce((state, line) => {
-      if (line.trim() === '') { return state; }
-      if (line.trim() === '|') { return state; }
-      if (line.trim() === 'V') { return Object.assign({}, state, {aboutToAssign: true}); }
+      let code = line.trim();
+
+      if (code === '') { return state; }
+      if (code === '|') { return state; }
+      if (code === 'V') { return Object.assign({}, state, {aboutToAssign: true}); }
+      if (code.startsWith('{.')) {
+        code = line.replace('{.', '{state.value.');
+      }
 
       if (state.aboutToAssign) {
-        const source = line.trim();
+        const source = code;
 
         state.returnValue[source] = state.value;
 
         state.aboutToAssign = false;
       }  else {
-        state.value = vm.runInNewContext(line, state);
+        state.value = eval(code);
       }
 
       return Object.assign({}, state);
@@ -37,11 +42,29 @@ function diagram (strings, ...values) {
   };
 }
 
+function view (count) {
+  return (
+    div('.counter', [
+      'Count:' + count,
+      button('.add', 'Add')
+    ])
+  );
+}
+
 const main = diagram`
-    {xs.of(div('hello world'))}
-              |
-              V
-             DOM
+             {sources.DOM}
+                   |
+           {.select('.add')}
+                   |
+           {.events('click')}
+                   |
+              {.mapTo(+1)}
+                   |
+ {.fold((total, change) => total + change, 0)}
+                   |
+              {.map(view)}
+                   V
+                  DOM
 `;
 
 const drivers = {
