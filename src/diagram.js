@@ -1,26 +1,13 @@
 import range from './range';
+import vm from 'vm';
 
 function breakUpLine (line) {
   const initialState = {tokens: [], parsingCode: false, parsingAssignment: false, codeStartIndex: null, assignmentStartIndex: null};
 
-  const {tokens, parsingAssignment, assignmentStartIndex} = line
+  const {tokens, parsingAssignment, assignmentStartIndex, parsingCode, codeStartIndex} = line
     .split('')
     .reduce((state, character, index) => {
       if (character === ' ' && !state.parsingCode && !state.parsingAssignment) { return state; }
-
-      if (character === '|') {
-        return {
-          ...state,
-          tokens: [...state.tokens, {type: '|', range: range(index, index)}]
-        };
-      }
-
-      if (character === 'v') {
-        return {
-          ...state,
-          tokens: [...state.tokens, {type: 'v', range: range(index, index)}]
-        };
-      }
 
       if (character === '{') {
         return {
@@ -56,12 +43,40 @@ function breakUpLine (line) {
         };
       }
 
+      if (character === '|') {
+        return {
+          ...state,
+          tokens: [...state.tokens, {type: '|', range: range(index, index)}]
+        };
+      }
+
+      if (character === '\\') {
+        return {
+          ...state,
+          tokens: [...state.tokens, {type: '\\', range: range(index, index), offset: -1}]
+        };
+      }
+
+      if (character === '/') {
+        return {
+          ...state,
+          tokens: [...state.tokens, {type: '/', range: range(index, index), offset: +1}]
+        };
+      }
+
+      if (character === 'v') {
+        return {
+          ...state,
+          tokens: [...state.tokens, {type: 'v', range: range(index, index)}]
+        };
+      }
+
       if (state.parsingAssignment) {
         const tokens = state.tokens.slice();
         const assignmentToken = tokens[tokens.length - 1];
 
         if (character === ' ') {
-          assignmentToken.range = range(state.assignmentStartIndex, index);
+          assignmentToken.range = range(state.assignmentStartIndex - 1, index + 1);
 
           return {
             ...state,
@@ -90,24 +105,32 @@ function breakUpLine (line) {
 
         tokens: [...state.tokens, {type: 'assignment', name: character}]
       };
-    }, initialState)
+    }, initialState);
 
   const lastToken = tokens[tokens.length - 1];
 
   if (parsingAssignment) {
-    lastToken.range = range(assignmentStartIndex, line.length);
+    lastToken.range = range(assignmentStartIndex - 1, line.length + 1);
+  }
+
+  if (parsingCode) {
+    lastToken.range = range(codeStartIndex - 1, line.length + 1);
   }
 
   return tokens;
 }
 export default function diagram (strings, ...values) {
-  const lines = strings[0].split('\n');
+  let lines = strings.raw[0].split('\n');
+  let given = {};
+
+  if (values[0]) {
+    given = values[0];
+    lines = strings.raw[1].split('\n');
+  }
 
   return function main (sources) {
     const initialState = {
-      ...sources,
       channels: [],
-      aboutToAssign: false,
       returnValue: {}
     };
 
@@ -120,7 +143,7 @@ export default function diagram (strings, ...values) {
 
       const newChannels = tokens.map((token, index) => {
         const overlappingChannels = state
-          .channels.filter(channel => channel.range.overlaps(token.range));
+          .channels.filter(channel => token.range.overlaps(channel.range, token.offset || 0));
 
         if (token.type === 'code') {
           let input;
@@ -131,23 +154,42 @@ export default function diagram (strings, ...values) {
             token.code = `input${token.code}`;
           }
 
-          return {...token, value: eval(token.code), readyToAssign: false};
+          const values = {};
+
+          if (overlappingChannels.length === 2) {
+            for (const channel of overlappingChannels) {
+              values[channel.name] = channel.value;
+            }
+          }
+
+          const context = {sources, ...values, input, ...given};
+
+          const result = vm.runInNewContext(token.code, context);
+
+          return {...token, value: result, readyToAssign: false};
         }
 
-        if (token.type === '|') {
-          return {...token, value: overlappingChannels[0].value, readyToAssign: false};
+        if (token.type === '|' || token.type === '/' || token.type === '\\') {
+          return {...token, name: overlappingChannels[0].name, value: overlappingChannels[0].value, readyToAssign: false};
         }
 
         if (token.type === 'v') {
           return {...token, value: overlappingChannels[0].value, readyToAssign: true};
         }
 
-        if (token.type === 'assignment') {
+        if (token.type === 'assignment' && overlappingChannels[0].readyToAssign) {
           state.returnValue[token.name] = overlappingChannels[0].value;
+          return;
         }
-      });
+
+        if (token.type === 'assignment') {
+          return {...token, value: overlappingChannels[0].value, readyToAssign: false, name: token.name}
+        };
+      }).filter(channel => !!channel);
 
       state.channels = newChannels;
+
+      console.log(newChannels);
 
       return Object.assign({}, state);
     }, initialState);
@@ -181,6 +223,12 @@ export default function diagram (strings, ...values) {
 //
 //    if prevousChannel ready for assignment
 //      assign channel value to line name
+//
+//    if \
+//      return previous channel value (offset to left by one)
+//
+//    if /
+//      return previous channel value (offset to right by one)
 //
 //    Else code
 //

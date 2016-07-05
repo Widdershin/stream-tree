@@ -12,9 +12,12 @@ export default function range (start, end) {
 //  ---
 //    --
 
-    overlaps (range) {
-      const overlappingLeft = range.start <= end && end <= range.end;
-      const overlappingRight = start <= range.end && range.end <= end;
+    overlaps (range, offset = 0) {
+      const offsetStart = start + offset;
+      const offsetEnd = end + offset;
+
+      const overlappingLeft = range.start <= offsetEnd && offsetEnd <= range.end;
+      const overlappingRight = offsetStart <= range.end && range.end <= offsetEnd;
 
       return overlappingRight || overlappingLeft;
     }

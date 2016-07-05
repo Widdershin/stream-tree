@@ -33,4 +33,22 @@ describe('diagram', () => {
     assert.deepEqual(result.tripledNumbers, [3, 6, 9]);
   });
 
+  it('can combine branches', () => {
+    const test = diagram`
+      {sources.a}    {sources.b}
+          \               /
+           \             /
+            a           b
+             \         /
+             {  a + b  }
+                  |
+                  v
+                result
+    `;
+
+    const {result} = test({a: 1, b: 2});
+
+    assert.equal(result, 3);
+  });
+
 });
