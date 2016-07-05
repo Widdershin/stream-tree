@@ -120,13 +120,15 @@ function breakUpLine (line) {
   return tokens;
 }
 export default function diagram (strings, ...values) {
-  let lines = strings.raw[0].split('\n');
+  let diagramString = strings.raw[0];
   let given = {};
 
   if (values[0]) {
     given = values[0];
-    lines = strings.raw[1].split('\n');
+    diagramString = strings.raw[1];
   }
+
+  const lines = diagramString.split("\n");
 
   return function main (sources) {
     const initialState = {
@@ -156,13 +158,13 @@ export default function diagram (strings, ...values) {
 
           const values = {};
 
-          if (overlappingChannels.length === 2) {
+          if (1 < overlappingChannels.length) {
             for (const channel of overlappingChannels) {
               values[channel.name] = channel.value;
             }
           }
 
-          const context = {sources, ...values, input, ...given};
+          const context = {sources, ...values, input, ...given, diagram: diagramString};
 
           const result = vm.runInNewContext(token.code, context);
 
@@ -188,8 +190,6 @@ export default function diagram (strings, ...values) {
       }).filter(channel => !!channel);
 
       state.channels = newChannels;
-
-      console.log(newChannels);
 
       return Object.assign({}, state);
     }, initialState);
