@@ -4,7 +4,6 @@ import xs from 'xstream';
 
 import diagram from './src/diagram';
 
-
 function renderView (count) {
   return (
     div('.counter', [

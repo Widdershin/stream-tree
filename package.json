@@ -4,13 +4,14 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "budo index.js -- -t babelify | garnish",
+    "start": "budo index.js:bundle.js -- -t babelify | garnish",
     "test": "mocha --compilers js:babel-core/register",
     "test/docs": "markdown-doctest",
     "precompile-lib": "rm -rf lib/ && mkdir -p lib",
     "compile-lib": "babel src -d lib",
     "prepublish": "npm run compile-lib",
-    "compile/test/docs": "npm run compile-lib && npm run test/docs"
+    "compile/test/docs": "npm run compile-lib && npm run test/docs",
+    "bundle": "browserify index.js -o bundle.js -t babelify"
   },
   "author": "",
   "license": "ISC",
@@ -24,9 +25,7 @@
     "budo": "^8.3.0",
     "garnish": "^5.2.0",
     "mocha": "^2.5.3",
-    "xstream": "^5.1.0"
-  },
-  "dependencies": {
+    "xstream": "^5.1.0",
     "markdown-doctest": "^0.8.1"
   }
 }
