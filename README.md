@@ -1,5 +1,6 @@
 stream-tree
 ===
+[![stability][0]][1]
 
 `stream-tree` is a way to write functions as ascii flowcharts in JavaScript.
 
@@ -153,3 +154,5 @@ const main = diagram`
 `;
 ```
 
+[0]: https://img.shields.io/badge/stability-experimental-orange.svg?style=flat-square
+[1]: https://nodejs.org/api/documentation.html#documentation_stability_index
