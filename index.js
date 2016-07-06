@@ -1,15 +1,8 @@
 import {run} from '@cycle/xstream-run';
 import {button, div, makeDOMDriver, pre} from '@cycle/dom';
 import xs from 'xstream';
-import vm from 'vm';
 
 import diagram from './src/diagram';
-
-/* function main ({DOM}) {
-  return {
-    DOM: xs.of(div('hello world'))
-  };
-}*/
 
 
 function renderView (count) {
@@ -23,7 +16,7 @@ function renderView (count) {
       pre('function main (sources) {' + main.toString() + '}'),
       pre('function intent (sources) {' + intent.toString() + '}'),
       pre('function model (sources) {' + model.toString() + '}'),
-      pre('function view (sources) {' + view.toString()+ '}')
+      pre('function view (sources) {' + view.toString() + '}')
     ])
   );
 }
@@ -46,7 +39,6 @@ const intent = diagram`
 
 const model = diagram`
 Given: ${{xs, add, subtract, reset}}
-
          {sources.add$}   {sources.subtract$}   {sources.reset$}
                |                 |                  |
           {.mapTo(add)}    {.mapTo(subtract)}   {.mapTo(reset)}
@@ -62,7 +54,6 @@ Given: ${{xs, add, subtract, reset}}
 
 const view = diagram`
 Given: ${{renderView}}
-
                           {sources.count$}
                                  |
                         {.map(renderView)}
@@ -72,7 +63,6 @@ Given: ${{renderView}}
 
 const main = diagram`
   Given: ${{intent, model, view}}
-
                              {sources}
                                  |
                              {intent}
