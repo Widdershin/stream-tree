@@ -1,8 +1,9 @@
 {
   "name": "stream-tree",
   "version": "0.0.1",
-  "description": "",
-  "main": "index.js",
+  "description": "stream-tree is a way to write functions as ASCII flowcharts",
+  "main": "lib/diagram.js",
+  "files": ["lib/"],
   "scripts": {
     "start": "budo index.js:bundle.js -- -t babelify | garnish",
     "test": "mocha --compilers js:babel-core/register",
@@ -13,8 +14,8 @@
     "compile/test/docs": "npm run compile-lib && npm run test/docs",
     "bundle": "browserify index.js -o bundle.js -t babelify"
   },
-  "author": "",
-  "license": "ISC",
+  "author": "Nick Johnstone",
+  "license": "MIT",
   "devDependencies": {
     "@cycle/dom": "^10.0.5",
     "@cycle/xstream-run": "^3.0.3",
