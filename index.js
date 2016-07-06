@@ -23,7 +23,7 @@ function renderView (count) {
       pre('function main (sources) {' + main.toString() + '}'),
       pre('function intent (sources) {' + intent.toString() + '}'),
       pre('function model (sources) {' + model.toString() + '}'),
-      pre('function view (sources) {' + view.toString( + '}'))
+      pre('function view (sources) {' + view.toString()+ '}')
     ])
   );
 }
@@ -47,43 +47,43 @@ const intent = diagram`
 const model = diagram`
 Given: ${{xs, add, subtract, reset}}
 
-   {sources.add$}   {sources.subtract$}   {sources.reset$}
-         |                 |                  |
-    {.mapTo(add)}    {.mapTo(subtract)}   {.mapTo(reset)}
-         |                 |                  |
-        add$           subtract$          reset$
-          \                |               /
-        { xs.merge(add$, subtract$, reset$) }
-                           |
-     {.fold((state, reducer) => reducer(state), 0)}
-                           |
-                         count$
+         {sources.add$}   {sources.subtract$}   {sources.reset$}
+               |                 |                  |
+          {.mapTo(add)}    {.mapTo(subtract)}   {.mapTo(reset)}
+               |                 |                  |
+              add$           subtract$          reset$
+                \                |               /
+              { xs.merge(add$, subtract$, reset$) }
+                                 |
+           {.fold((state, reducer) => reducer(state), 0)}
+                                 |
+                               count$
 `;
 
 const view = diagram`
 Given: ${{renderView}}
 
-        {sources.count$}
-               |
-      {.map(renderView)}
-               |
-             vtree$
+                          {sources.count$}
+                                 |
+                        {.map(renderView)}
+                                 |
+                               vtree$
 `;
 
 const main = diagram`
   Given: ${{intent, model, view}}
 
-          {sources}
-              |
-          {intent}
-              |
-           {model}
-              |
-           {view}
-              |
-          {.vtree$}
-              |
-             DOM
+                             {sources}
+                                 |
+                             {intent}
+                                 |
+                              {model}
+                                 |
+                              {view}
+                                 |
+                             {.vtree$}
+                                 |
+                                DOM
 `;
 
 const drivers = {
