@@ -151,8 +151,8 @@ export default function diagram (strings, ...values) {
 
           const values = {};
 
-          if (1 < overlappingChannels.length) {
-            for (const channel of overlappingChannels) {
+          for (const channel of overlappingChannels) {
+            if (channel.name) {
               values[channel.name] = channel.value;
             }
           }
